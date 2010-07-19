@@ -1,13 +1,13 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- * Copyright (C) 2005 Leo Feyer
+ * TYPOlight Open Source CMS
+ * Copyright (C) 2005-2010 Leo Feyer
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation, either
- * version 2.1 of the License, or (at your option) any later version.
+ * version 3 of the License, or (at your option) any later version.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,10 +16,10 @@
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this program. If not, please visit the Free
- * Software Foundation website at http://www.gnu.org/licenses/.
+ * Software Foundation website at <http://www.gnu.org/licenses/>.
  *
  * PHP version 5
- * @copyright  Andreas Schempp 2009
+ * @copyright  Andreas Schempp 2009-2010
  * @author     Andreas Schempp <andreas@schempp.ch>
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  * @version    $Id$
@@ -35,7 +35,7 @@ class NewsTwitter extends Frontend
 	{
 		$this->import('Database');
 		
-		$objNews = $this->Database->prepare("SELECT tl_news.*, tl_news_archive.twitterAuth, tl_news_archive.jumpTo AS parentJumpTo FROM tl_news LEFT OUTER JOIN tl_news_archive ON tl_news.pid=tl_news_archive.id WHERE tl_news_archive.twitter='1' AND tl_news.twitter='1' AND twitterStatus='now' AND published='1' AND tl_news.id=?")->limit(1)->execute($dc->id);
+		$objNews = $this->Database->prepare("SELECT tl_news.*, tl_news_archive.twitterAuth, tl_news_archive.twitterParams, tl_news_archive.jumpTo AS parentJumpTo FROM tl_news LEFT OUTER JOIN tl_news_archive ON tl_news.pid=tl_news_archive.id WHERE tl_news_archive.twitter='1' AND tl_news.twitter='1' AND twitterStatus='now' AND published='1' AND tl_news.id=?")->limit(1)->execute($dc->id);
 		
 		if (!$objNews->numRows)
 			return;
@@ -46,7 +46,7 @@ class NewsTwitter extends Frontend
 			$strUrl = $this->generateNewsUrl($objNews);
 		}
 			
-		if ($this->twitter($objNews->twitterAuth, (strlen($objNews->twitterMessage) ? $objNews->twitterMessage : (strlen($objNews->teaser) ? $objNews->teaser : strip_tags($objNews->text))), $strUrl))
+		if ($this->twitter($objNews->twitterAuth, (strlen($objNews->twitterMessage) ? $objNews->twitterMessage : (strlen($objNews->teaser) ? $objNews->teaser : strip_tags($objNews->text))), $strUrl, $objNews->twitterParams))
 		{
 			$this->Database->prepare("UPDATE tl_news SET twitterStatus='sent' WHERE id=?")->execute($objNews->id);
 		}
@@ -60,7 +60,7 @@ class NewsTwitter extends Frontend
 	{
 		$this->import('Database');
 		
-		$objNews = $this->Database->prepare("SELECT tl_news.*, tl_news_archive.twitterAuth FROM tl_news LEFT OUTER JOIN tl_news_archive ON tl_news.pid=tl_news_archive.id WHERE tl_news_archive.twitter='1' AND tl_news.twitter='1' AND twitterStatus='cron' AND published='1'")->limit(1)->execute($dc->id);
+		$objNews = $this->Database->prepare("SELECT tl_news.*, tl_news_archive.twitterAuth, tl_news_archive.twitterParams, tl_news_archive.jumpTo AS parentJumpTo FROM tl_news LEFT OUTER JOIN tl_news_archive ON tl_news.pid=tl_news_archive.id WHERE tl_news_archive.twitter='1' AND tl_news.twitter='1' AND twitterStatus='cron' AND published='1'")->limit(1)->execute($dc->id);
 		
 		if (!$objNews->numRows)
 			return;
@@ -77,7 +77,7 @@ class NewsTwitter extends Frontend
 				$strUrl = $this->generateNewsUrl($objNews);
 			}
 		
-			if ($this->twitter($objNews->twitterAuth, (strlen($objNews->twitterMessage) ? $objNews->twitterMessage : (strlen($objNews->teaser) ? $objNews->teaser : strip_tags($objNews->text))), $strUrl))
+			if ($this->twitter($objNews->twitterAuth, (strlen($objNews->twitterMessage) ? $objNews->twitterMessage : (strlen($objNews->teaser) ? $objNews->teaser : strip_tags($objNews->text))), $strUrl, $objNews->twitterParams))
 			{
 				$this->Database->prepare("UPDATE tl_news SET twitterStatus='sent' WHERE id=?")->execute($objNews->id);
 			}
@@ -89,12 +89,18 @@ class NewsTwitter extends Frontend
 	 * Here the whole magic happens.
 	 * It actually takes 4! lines of code to twitter!
 	 */
-	private function twitter($strAuth, $strStatus, $strUrl='')
+	private function twitter($strAuth, $strStatus, $strUrl='', $strUrlParams='')
 	{
+		$this->import('String');
+		
+		// Decode entities, replace insert tags
+		$strStatus = $this->String->decodeEntities($strStatus);
+		$strStatus = $this->restoreBasicEntities($strStatus);
+		$strStatus = $this->replaceInsertTags($strStatus);
+		
 		// Shorten message
 		if (strlen($strStatus) > 120)
 		{
-			$this->import('String');
             $strStatus = $this->String->substr($strStatus, 110) . ' ...';
         }
         
@@ -103,7 +109,12 @@ class NewsTwitter extends Frontend
 	        // Make sure url has protocol and domain
     	    if (substr($strUrl, 0, 4) != 'http')
         	{
-        		$strUrl = $this->Environment->url . '/' . $strUrl;
+        		$strUrl = $this->Environment->base . $strUrl;
+	        }
+	        
+	        if (strlen($strUrlParams))
+	        {
+	        	$strUrl .= (strpos($strUrl, '?') === false ? '?' : '&') . $strUrlParams;
 	        }
         
     	    $strUrl = $this->shortUrl($strUrl);
@@ -141,7 +152,7 @@ class NewsTwitter extends Frontend
 	
 	
 	/**
-	 * Generate a URL and return it as string
+	 * Generate an URL and return it as string
 	 */
 	private function generateNewsUrl(Database_Result $objArticle, $blnAddArchive=false)
 	{
