@@ -162,52 +162,67 @@ class NewsTwitter extends Frontend
 	 */
 	private function generateNewsUrl(Database_Result $objArticle, $blnAddArchive=false)
 	{
-		// Link to external page
-		if ($objArticle->source == 'external')
+		$strUrl = '';
+		
+		switch ($objArticle->source)
 		{
-			$this->import('String');
+			// Link to external page
+			case 'external':
+				$this->import('String');
 
-			if (substr($objArticle->url, 0, 7) == 'mailto:')
-			{
-				$objArticle->url = 'mailto:' . $this->String->encodeEmail(substr($objArticle->url, 7));
-			}
+				if (substr($objArticle->url, 0, 7) == 'mailto:')
+				{
+					$strUrl = $this->String->encodeEmail($objArticle->url);
+				}
+				else
+				{
+					$strUrl = ampersand($objArticle->url);
+				}
+				break;
 
-			return ampersand($objArticle->url);
+			// Link to an internal page
+			case 'internal':
+				$objPage = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
+									 	  ->limit(1)
+										  ->execute($objArticle->jumpTo);
+
+				if ($objPage->numRows)
+				{
+					$strUrl = ampersand($this->generateFrontendUrl($objPage->row()));
+				}
+				break;
+
+			// Link to an article
+			case 'article':
+				$objPage = $this->Database->prepare("SELECT a.id AS aId, a.alias AS aAlias, a.title, p.id, p.alias FROM tl_article a, tl_page p WHERE a.pid=p.id AND a.id=?")
+										  ->limit(1)
+										  ->execute($objArticle->articleId);
+
+				if ($objPage->numRows)
+				{
+					$strUrl = ampersand($this->generateFrontendUrl($objPage->row(), '/articles/' . ((!$GLOBALS['TL_CONFIG']['disableAlias'] && strlen($objPage->aAlias)) ? $objPage->aAlias : $objPage->aId)));
+				}
+				break;
 		}
 
-		// Link to internal page
-		else
+		// Link to the default page
+		if ($strUrl == '')
 		{
-			$strUrl = ampersand($this->Environment->request, ENCODE_AMPERSANDS);
-
-			// Get target page
 			$objPage = $this->Database->prepare("SELECT id, alias FROM tl_page WHERE id=?")
 								 	  ->limit(1)
-									  ->execute((($objArticle->source == 'default') ? $objArticle->parentJumpTo : $objArticle->jumpTo));
+									  ->execute($objArticle->parentJumpTo);
 
 			if ($objPage->numRows)
 			{
-				// Link to newsreader
-				if ($objArticle->source == 'default')
-				{
-					$strUrl = ampersand($this->generateFrontendUrl($objPage->fetchAssoc(), '/items/' . ((!$GLOBALS['TL_CONFIG']['disableAlias'] && strlen($objArticle->alias)) ? $objArticle->alias : $objArticle->id)));
-				}
-
-				// Link to internal page
-				else
-				{
-					$strUrl = ampersand($this->generateFrontendUrl($objPage->fetchAssoc()));
-				}
+				$strUrl = ampersand($this->generateFrontendUrl($objPage->row(), '/items/' . ((!$GLOBALS['TL_CONFIG']['disableAlias'] && strlen($objArticle->alias)) ? $objArticle->alias : $objArticle->id)));
 			}
-
-			// Add the current archive parameter (news archive)
-			if ($blnAddArchive && strlen($this->Input->get('month')))
+			else
 			{
-				$strUrl .= ($GLOBALS['TL_CONFIG']['disableAlias'] ? '&amp;' : '?') . 'month=' . $this->Input->get('month');
+				$strUrl = ampersand($this->Environment->request, true);
 			}
-
-			return $strUrl;
 		}
+		
+		return $strUrl;
 	}
 	
 	
