@@ -21,7 +21,7 @@
  * Software Foundation website at <http://www.gnu.org/licenses/>.
  *
  * PHP version 5
- * @copyright  Andreas Schempp 2009-2010
+ * @copyright  Andreas Schempp 2010
  * @author     Andreas Schempp <andreas@schempp.ch>
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  * @version    $Id$
@@ -29,14 +29,14 @@
 
 
 /**
- * InputCount fields
+ * Fields
  */
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.teaser';
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.twitterMessage';
+$GLOBALS['TL_LANG']['tl_settings']['twitter_key']		= array('Consumer key', '<a href="contao/help.php?table=tl_settings&field=twitter_key" onclick="Backend.openWindow(this, 600, 500); return false;">Please enter your application\' "Consumer key".</a>');
+$GLOBALS['TL_LANG']['tl_settings']['twitter_secret']	= array('Consumer secret', '<a href="contao/help.php?table=tl_settings&field=twitter_secret" onclick="Backend.openWindow(this, 600, 500); return false;">Please enter your application\' "Consumer secret".</a>');
 
 
 /**
- * Cron jobs
+ * Legends
  */
-$GLOBALS['TL_CRON']['hourly'][] = array('NewsTwitter', 'cron');
+$GLOBALS['TL_LANG']['tl_settings']['twitter_legend']	= 'Twitter Authentication';
 

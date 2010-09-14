@@ -1,8 +1,10 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight Open Source CMS
+ * Contao Open Source CMS
  * Copyright (C) 2005-2010 Leo Feyer
+ *
+ * Formerly known as TYPOlight Open Source CMS.
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -86,53 +88,57 @@ class NewsTwitter extends Frontend
 	
 	
 	/**
-	 * Here the whole magic happens.
-	 * It actually takes 4! lines of code to twitter!
+	 * Send a message to twitter
 	 */
-	private function twitter($strAuth, $strStatus, $strUrl='', $strUrlParams='')
+	private function twitter($varAuth, $strStatus, $strUrl='', $strUrlParams='')
 	{
-		$this->import('String');
+		$access_token = deserialize($varAuth, true);
 		
-		// Decode entities, replace insert tags
-		$strStatus = $this->String->decodeEntities($strStatus);
-		$strStatus = $this->restoreBasicEntities($strStatus);
-		$strStatus = $this->replaceInsertTags($strStatus);
+		// Create a TwitterOauth object with consumer/user tokens.
+		$connection = new TwitterOAuth($GLOBALS['TL_CONFIG']['twitter_key'], $GLOBALS['TL_CONFIG']['twitter_secret'], $access_token['oauth_token'], $access_token['oauth_token_secret']);
+		$connection->get('account/verify_credentials');
 		
-		// Shorten message
-		if (strlen($strStatus) > 120)
+		if ($connection->http_code == 200)
 		{
-            $strStatus = $this->String->substr($strStatus, 110) . ' ...';
-        }
-        
-        if (strlen($strUrl))
-        {
-	        // Make sure url has protocol and domain
-    	    if (substr($strUrl, 0, 4) != 'http')
-        	{
-        		$strUrl = $this->Environment->base . $strUrl;
-	        }
-	        
-	        if (strlen($strUrlParams))
-	        {
-	        	$strUrl .= (strpos($strUrl, '?') === false ? '?' : '&') . $strUrlParams;
-	        }
-        
-    	    $strUrl = $this->shortUrl($strUrl);
+			$this->import('String');
+			
+			// Decode entities, replace insert tags
+			$strStatus = $this->String->decodeEntities($strStatus);
+			$strStatus = $this->restoreBasicEntities($strStatus);
+			$strStatus = $this->replaceInsertTags($strStatus);
+			
+			// Shorten message
+			if (strlen($strStatus) > 120)
+			{
+				$strStatus = $this->String->substr($strStatus, 110) . ' ...';
+			}
+			
+			if (strlen($strUrl))
+			{
+				// Make sure url has protocol and domain
+				if (substr($strUrl, 0, 4) != 'http')
+				{
+					$strUrl = $this->Environment->base . $strUrl;
+				}
+				
+				if (strlen($strUrlParams))
+				{
+				    $strUrl .= (strpos($strUrl, '?') === false ? '?' : '&') . $strUrlParams;
+				}
+			
+				$strUrl = $this->shortUrl($strUrl);
+			}
+			
+			$connection->post('http://twitter.com/statuses/update.json?status=' . urlencode($strStatus . ' ' . $strUrl));
+			
+			if ($connection->http_code == 200)
+			{
+				return true;
+			}
 		}
 		
-        $strData = 'source=typolight&status=' . urlencode($strStatus . ' ' . $strUrl);
-        
-        $objRequest = new Request();
-        $objRequest->setHeader('Authorization', 'Basic {' . $strAuth . '}');
-        $objRequest->send('http://twitter.com/statuses/update.json', $strData, 'POST');
-        
-        if ($objRequest->hasError())
-        {
-        	$this->log('Error posting to Twitter', 'NewsTwitter twitter()', TL_ERROR);
-        	return false;
-        }
-        
-        return true;
+		$this->log('Error posting to Twitter', 'NewsTwitter twitter()', TL_ERROR);
+		return false;
 	}
 	
 	
@@ -202,29 +208,6 @@ class NewsTwitter extends Frontend
 
 			return $strUrl;
 		}
-	}
-	
-	
-	/**
-	 * load_callback for Twitter Auth text field
-	 */
-	public function loadAuth($varValue)
-	{
-		return '';
-	}
-	
-	
-	/**
-	 * save_callback for Twitter Auth text field
-	 */
-	public function saveAuth($varValue)
-	{
-		$arrAuth = deserialize($varValue, true);
-		
-		if (!strlen($arrAuth[0]) || !strlen($arrAuth[1]))
-			return '';
-			
-		return base64_encode($arrAuth[0] . ':' . $arrAuth[1]);
 	}
 	
 	

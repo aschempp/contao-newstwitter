@@ -21,7 +21,7 @@
  * Software Foundation website at <http://www.gnu.org/licenses/>.
  *
  * PHP version 5
- * @copyright  Andreas Schempp 2009-2010
+ * @copyright  Andreas Schempp 2010
  * @author     Andreas Schempp <andreas@schempp.ch>
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  * @version    $Id$
@@ -29,14 +29,8 @@
 
 
 /**
- * InputCount fields
+ * Help Wizard
  */
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.teaser';
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.twitterMessage';
-
-
-/**
- * Cron jobs
- */
-$GLOBALS['TL_CRON']['hourly'][] = array('NewsTwitter', 'cron');
+$GLOBALS['TL_LANG']['XPL']['twitter_auth'] = '<p class="tl_help_table">Um Ihre Webseite auf sichere Weise mit Twitter zu verbinden, wird es DRINGEND empfohlen Ihre eigene "Browser"-Applikation zu registrieren. Sie können dies unter <a href="http://dev.twitter.com/apps/new" onclick="window.open(this.href); return false">http://dev.twitter.com/apps/new</a> vornehmen.<br /><br />
+Die "Callback URL" spielt keine Rolle, Sie müssen aber unbedingt etwas eingeben, da Twitter sonst automatisch auf "Client application type" wechselt.<br /><br />Nachdem Sie Ihre Applikation registriert haben, geben Sie "Consumer key" und "Consumer secret" in den Systemeinstellungen von Contao ein.</p>';
 

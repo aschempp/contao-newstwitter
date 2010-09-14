@@ -21,7 +21,7 @@
  * Software Foundation website at <http://www.gnu.org/licenses/>.
  *
  * PHP version 5
- * @copyright  Andreas Schempp 2009-2010
+ * @copyright  Andreas Schempp 2010
  * @author     Andreas Schempp <andreas@schempp.ch>
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  * @version    $Id$
@@ -29,14 +29,27 @@
 
 
 /**
- * InputCount fields
+ * Palettes
  */
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.teaser';
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.twitterMessage';
+$GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';{twitter_legend:hide},twitter_key,twitter_secret';
 
 
 /**
- * Cron jobs
+ * Fields
  */
-$GLOBALS['TL_CRON']['hourly'][] = array('NewsTwitter', 'cron');
+$GLOBALS['TL_DCA']['tl_settings']['fields']['twitter_key'] = array
+(
+	'label'				=> &$GLOBALS['TL_LANG']['tl_settings']['twitter_key'],
+	'inputType'			=> 'text',
+	'eval'				=> array('tl_class'=>'w50', 'helpwizard'=>true),
+	'explanation'		=> 'twitter_auth',
+);
+
+$GLOBALS['TL_DCA']['tl_settings']['fields']['twitter_secret'] = array
+(
+	'label'				=> &$GLOBALS['TL_LANG']['tl_settings']['twitter_secret'],
+	'inputType'			=> 'text',
+	'eval'				=> array('tl_class'=>'w50', 'helpwizard'=>true),
+	'explanation'		=> 'twitter_auth',
+);
 

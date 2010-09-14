@@ -21,7 +21,7 @@
  * Software Foundation website at <http://www.gnu.org/licenses/>.
  *
  * PHP version 5
- * @copyright  Andreas Schempp 2009-2010
+ * @copyright  Andreas Schempp 2010
  * @author     Andreas Schempp <andreas@schempp.ch>
  * @license    http://opensource.org/licenses/lgpl-3.0.html
  * @version    $Id$
@@ -29,14 +29,8 @@
 
 
 /**
- * InputCount fields
+ * Help Wizard
  */
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.teaser';
-$GLOBALS['TL_CONFIG']['inputcount'][] = 'tl_news.twitterMessage';
-
-
-/**
- * Cron jobs
- */
-$GLOBALS['TL_CRON']['hourly'][] = array('NewsTwitter', 'cron');
+$GLOBALS['TL_LANG']['XPL']['twitter_auth'] = '<p class="tl_help_table">To securely link your website with your twitter account, it is HIGHLY recommended to register a custom "Browser" application! You can do this at <a href="http://dev.twitter.com/apps/new" onclick="window.open(this.href); return false">http://dev.twitter.com/apps/new</a>.<br /><br />
+The callback url does not matter, just make sure you provide something or Twitter will fall back to a "Client" application type.<br /><br />After successfully registering your application, please add the "Consumer key" and "Consumer secret" to your system configuration settings.</p>';
 
