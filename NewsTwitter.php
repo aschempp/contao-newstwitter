@@ -168,10 +168,9 @@ class NewsTwitter extends Frontend
 		{
 			// Link to external page
 			case 'external':
-				$this->import('String');
-
 				if (substr($objArticle->url, 0, 7) == 'mailto:')
 				{
+					$this->import('String');
 					$strUrl = $this->String->encodeEmail($objArticle->url);
 				}
 				else
